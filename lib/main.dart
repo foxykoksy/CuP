@@ -92,7 +92,7 @@ class _MainMenu extends State<MainMenu>{
             )
         ),
         Positioned(
-          left:MediaQuery. of(context). size. width*9/100,
+          left:MediaQuery. of(context). size. width*23/100 -MediaQuery. of(context). size. width/7,
           top:MediaQuery. of(context). size. height*50/100,
           child: ButtonTheme(
             minWidth: MediaQuery. of(context). size. width/7,
@@ -111,14 +111,14 @@ class _MainMenu extends State<MainMenu>{
           )
       ),
         Positioned(
-            left:MediaQuery. of(context). size. width*36/100,
+            left:MediaQuery. of(context). size. width*34/100,
             top:MediaQuery. of(context). size. height*61/100,
             child: Container(
                 decoration: BoxDecoration(
                   color: Colors.red,
                   borderRadius: BorderRadius.circular(5),
                 ),
-              width: MediaQuery. of(context). size. width*26/100,
+              width: MediaQuery. of(context). size. width*30/100,
               height: MediaQuery. of(context). size. height/15,
               //color: Colors.red,
               child: Center(child:Text('Best Time:\n $score seconds!',textAlign:TextAlign.center ,),)
