@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/services.dart';
 import 'dart:async';
 import 'dart:math';
@@ -11,8 +12,30 @@ void main() {
 }
 List<dynamicWidget> dynamicList = <dynamicWidget>[];
 List<PopUp> PopUpList = <PopUp>[];
+int difficulty = 5;
+SharedPreferences highscore;
+int roundtime = 0;
 
-class MainMenu extends StatelessWidget {
+class MainMenu extends StatefulWidget {
+  @override
+  _MainMenu createState() => _MainMenu();
+}
+
+class _MainMenu extends State<MainMenu>{
+  String score;
+  _loadHighScore() async {
+   highscore = await SharedPreferences.getInstance();
+   if(highscore.getString('score$difficulty')==null)score='??';
+   else score=(double.parse(highscore.getString('score$difficulty'))/10).toString();
+   setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadHighScore();
+  }
+
   @override
   Widget build(BuildContext context) {
     SystemChrome.setPreferredOrientations([
@@ -21,38 +44,91 @@ class MainMenu extends StatelessWidget {
     ]);
     return Scaffold(
       body:Stack( children:
-          [Container(
-          decoration: BoxDecoration(
+      [Container(
+        decoration: BoxDecoration(
           image: DecorationImage(
-        fit: BoxFit.fill,
-        image:AssetImage('assets/images/menu.jpg'),             //сюда картинку
-      ),
+            fit: BoxFit.fill,
+            image:AssetImage('assets/images/menu.jpg'),             //сюда картинку
           ),
-          ),
-      Positioned(
-        left:MediaQuery. of(context). size. width/4,
-        top:MediaQuery. of(context). size. height*47/100,
-        child:ButtonTheme(
-          minWidth: MediaQuery. of(context). size. width/2,
-          height: MediaQuery. of(context). size. height/15*2,
-        child: RaisedButton(
-          child: Text('Start Game'),
-          onPressed: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(builder: (context) => HomePage()),
-            );
-          },
         ),
-        )
       ),
-          ]
+        Positioned(
+            left:MediaQuery. of(context). size. width/4,
+            top:MediaQuery. of(context). size. height*47/100,
+            child:ButtonTheme(
+              minWidth: MediaQuery. of(context). size. width/2,
+              height: MediaQuery. of(context). size. height/15*2,
+              child: RaisedButton(
+                child: Text('Start Game! \n Difficulty: $difficulty',textAlign:TextAlign.center),
+                onPressed: () {
+                  roundtime=0;
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => HomePage()),
+                  ).then((value) => setState(() {
+                    score=(double.parse(highscore.getString('score$difficulty'))/10).toString();
+                  }));
+                },
+              ),
+            )
+        ),
+        Positioned(
+            left:MediaQuery. of(context). size. width*3/4+MediaQuery. of(context). size. width/50,
+            top:MediaQuery. of(context). size. height*50/100,
+            child: ButtonTheme(
+              minWidth: MediaQuery. of(context). size. width/7,
+              height: MediaQuery. of(context). size. height*22/300,
+              child: RaisedButton(
+                child: Icon(Icons.arrow_upward),
+                onPressed: () {
+                  if(difficulty<20) {
+                    difficulty++;
+                    score=highscore.getString('score$difficulty') ?? '??';
+                    if(score != '??')score=(double.parse(score)/10).toString();
+                    setState(() {});
+                  }
+                },
+              ),
+            )
+        ),
+        Positioned(
+          left:MediaQuery. of(context). size. width*9/100,
+          top:MediaQuery. of(context). size. height*50/100,
+          child: ButtonTheme(
+            minWidth: MediaQuery. of(context). size. width/7,
+            height: MediaQuery. of(context). size. height*22/300,
+            child: RaisedButton(
+              child: Icon(Icons.arrow_downward),
+              onPressed: () {
+                if(difficulty>1) {
+                  difficulty--;
+                  score=highscore.getString('score$difficulty') ?? '??';
+                  if(score != '??')score=(double.parse(score)/10).toString();
+                  setState(() {});
+                }
+              },
+            ),
+          )
+      ),
+        Positioned(
+            left:MediaQuery. of(context). size. width*36/100,
+            top:MediaQuery. of(context). size. height*61/100,
+            child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(5),
+                ),
+              width: MediaQuery. of(context). size. width*26/100,
+              height: MediaQuery. of(context). size. height/15,
+              //color: Colors.red,
+              child: Center(child:Text('Best Time:\n $score seconds!',textAlign:TextAlign.center ,),)
+            )
+        )
+      ]
       ),
     );
   }
 }
-
-
 
 class dynamicWidget extends StatefulWidget {
   Key key = UniqueKey();
@@ -167,7 +243,7 @@ class _dynamicWidget extends State<dynamicWidget>{
 }
 
 class PopUp extends StatefulWidget{
-  int count = 5;
+  int count = difficulty;
   double size = 50;
   @override
   _PopUp createState() => new _PopUp(count,size);
@@ -208,13 +284,15 @@ class _PopUp extends State<PopUp>{
       ),
         Positioned(
             left: (MediaQuery. of(context). size. width-70)*Random().nextDouble(),
-            top: (MediaQuery. of(context). size. height-70)*Random().nextDouble(),
+            top: (MediaQuery. of(context). size. height-140)*Random().nextDouble()+70,
             width: size,
             height: size,
             child: FloatingActionButton(
               onPressed:(){
                 count--;
                 if(count==0){
+                 if(highscore.getString('score$difficulty')==null)highscore.setString('score$difficulty', roundtime.toString());
+                 else if(roundtime < int.parse(highscore.getString('score$difficulty')))highscore.setString('score$difficulty', roundtime.toString());
                   dynamicList.clear();
                   PopUpList.removeLast();
                   Navigator.pop(context);
@@ -245,6 +323,7 @@ class _HomePageState extends State<HomePage> {
     _timer = new Timer.periodic(
       oneSec,
           (Timer timer)  {
+        roundtime++;
         if(PopUpList.isEmpty){_timer.cancel();dynamicList.clear();}
         if(Random().nextInt(4)==0) dynamicList.add(new dynamicWidget(min+ Random().nextInt(15)));           /////тут вероятность
         setState(() {
